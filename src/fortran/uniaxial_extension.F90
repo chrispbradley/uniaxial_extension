@@ -1,4 +1,4 @@
-PROGRAM UNIAXIAL_EXTENSION
+PROGRAM UniaxialExtension
 
 #ifndef NOMPIMOD
   USE MPI
@@ -16,14 +16,17 @@ PROGRAM UNIAXIAL_EXTENSION
 #include "mpif.h"
 #endif
 
+  TYPE(cmfe_ContextType)          :: context
   TYPE(cmfe_RegionType)           :: worldRegion
-  TYPE(cmfe_CoordinateSystemType) :: worldCoordinateSystem
 
   INTEGER(CMISSIntg)              :: Err
 
   ! Intialise cmiss
-  CALL cmfe_Initialise(worldCoordinateSystem,worldRegion,Err)
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
+  CALL cmfe_Context_Initialise(context,err)
+  CALL cmfe_Initialise(context,err)
+  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
+  CALL cmfe_Region_Initialise(worldRegion,err)
+  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
 
   ! Input arguments: compressible, useGeneratedMesh, zeroLoad, useSimplex, usePressureBasis
 
@@ -34,7 +37,7 @@ PROGRAM UNIAXIAL_EXTENSION
   CALL SOLVE_MODEL(.FALSE., .FALSE., .FALSE., .TRUE., .FALSE.)
   CALL SOLVE_MODEL(.FALSE., .TRUE., .FALSE., .FALSE., .TRUE.)
 
-  CALL cmfe_Finalise(Err)
+  CALL cmfe_Finalise(context,Err)
 
   STOP
 
@@ -83,6 +86,7 @@ CONTAINS
     INTEGER(CMISSIntg)              :: numberOfMeshComponents = 1
     INTEGER(CMISSIntg)              :: meshComponentNumber = 1
 
+    INTEGER(CMISSIntg)              :: contextUserNumber
     INTEGER(CMISSIntg)              :: numberOfComputationalNodes,computationalNodeNumber
     INTEGER(CMISSIntg)              :: componentIdx,Err,numberOfMaterialComponents
     INTEGER(CMISSIntg)              :: numberOfXi,quadratureOrder
@@ -138,11 +142,12 @@ CONTAINS
 
     ! Get the number of computational nodes and this computational node number
     CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
+    CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
     CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfComputationalNodes,err)
     CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationalNodeNumber,err)
 
     CALL cmfe_CoordinateSystem_Initialise(coordinateSystem,Err)
-    CALL cmfe_CoordinateSystem_CreateStart(coordinateSystemUserNumber,coordinateSystem,Err)
+    CALL cmfe_CoordinateSystem_CreateStart(coordinateSystemUserNumber,context,coordinateSystem,Err)
     CALL cmfe_CoordinateSystem_DimensionSet(coordinateSystem,3,Err)
     CALL cmfe_CoordinateSystem_CreateFinish(coordinateSystem,Err)
 
@@ -155,7 +160,7 @@ CONTAINS
 
     ! Define basis
     CALL cmfe_Basis_Initialise(basis,Err)
-    CALL cmfe_Basis_CreateStart(basisUserNumber,basis,Err)
+    CALL cmfe_Basis_CreateStart(basisUserNumber,context,basis,Err)
     SELECT CASE (interpolationType)
     CASE(1,2,3,4)
       CALL cmfe_Basis_TypeSet(basis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
@@ -199,7 +204,7 @@ CONTAINS
     IF (usePressureBasis) THEN
       ! Define pressure basis
       CALL cmfe_Basis_Initialise(pressureBasis,Err)
-      CALL cmfe_Basis_CreateStart(pressureBasisUserNumber,pressureBasis,Err)
+      CALL cmfe_Basis_CreateStart(pressureBasisUserNumber,context,pressureBasis,Err)
       SELECT CASE (interpolationType)
       CASE(1,2,3,4)
         CALL cmfe_Basis_TypeSet(pressureBasis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
@@ -533,7 +538,7 @@ CONTAINS
 
     ! Define the problem
     CALL cmfe_Problem_Initialise(problem,Err)
-    CALL cmfe_Problem_CreateStart(problemUserNumber, &
+    CALL cmfe_Problem_CreateStart(problemUserNumber,context, &
       & [CMFE_PROBLEM_ELASTICITY_CLASS, &
       &  CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
       &  CMFE_PROBLEM_NO_SUBTYPE],problem,Err)
@@ -663,13 +668,14 @@ CONTAINS
     CALL cmfe_Fields_ElementsExport(fields,trim(output_file)//trim(prefix),"FORTRAN",Err)
     CALL cmfe_Fields_Finalise(fields,Err)
 
-    CALL cmfe_Problem_Destroy(ProblemUserNumber,Err)
+    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
+    CALL cmfe_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
     IF (useGeneratedMesh) THEN
-      CALL cmfe_GeneratedMesh_Destroy(RegionUserNumber,GeneratedMeshUserNumber,Err)
+      CALL cmfe_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)
     END IF
-    CALL cmfe_Basis_Destroy(BasisUserNumber,Err)
-    CALL cmfe_Region_Destroy(RegionUserNumber,Err)
-    CALL cmfe_CoordinateSystem_Destroy(CoordinateSystemUserNumber,Err)
+    CALL cmfe_Basis_Destroy(contextUserNumber,BasisUserNumber,Err)
+    CALL cmfe_Region_Destroy(contextUserNumber,RegionUserNumber,Err)
+    CALL cmfe_CoordinateSystem_Destroy(contextUserNumber,CoordinateSystemUserNumber,Err)
 
     WRITE(*,'(A)') "Program successfully completed."
 
@@ -682,4 +688,4 @@ CONTAINS
     STOP
   END SUBROUTINE HANDLE_ERROR
 
-END PROGRAM UNIAXIAL_EXTENSION
+END PROGRAM UniaxialExtension

@@ -52,27 +52,31 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     else:
         numberOfXi = 3
 
+    worldRegion = iron.Region()
+    iron.Context.WorldRegionGet(worldRegion)
+
     # Get the number of computational nodes and this computational node number
     computationEnvironment = iron.ComputationEnvironment()
+    iron.Context.ComputationEnvironmentGet(computationEnvironment)
     numberOfComputationalNodes = computationEnvironment.NumberOfWorldNodesGet()
     computationalNodeNumber = computationEnvironment.WorldNodeNumberGet()
 
     # Create a 3D rectangular cartesian coordinate system
     coordinateSystem = iron.CoordinateSystem()
-    coordinateSystem.CreateStart(coordinateSystemUserNumber)
+    coordinateSystem.CreateStart(coordinateSystemUserNumber,iron.Context)
     coordinateSystem.DimensionSet(3)
     coordinateSystem.CreateFinish()
 
     # Create a region and assign the coordinate system to the region
     region = iron.Region()
-    region.CreateStart(regionUserNumber,iron.WorldRegion)
+    region.CreateStart(regionUserNumber,worldRegion)
     region.LabelSet("Region")
     region.coordinateSystem = coordinateSystem
     region.CreateFinish()
 
     # Define basis
     basis = iron.Basis()
-    basis.CreateStart(basisUserNumber)
+    basis.CreateStart(basisUserNumber,iron.Context)
     if InterpolationType in (1,2,3,4):
         basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
     elif InterpolationType in (7,8,9):
@@ -86,7 +90,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     if(usePressureBasis):
         # Define pressure basis
         pressureBasis = iron.Basis()
-        pressureBasis.CreateStart(pressureBasisUserNumber)
+        pressureBasis.CreateStart(pressureBasisUserNumber,iron.Context)
         if InterpolationType in (1,2,3,4):
             pressureBasis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
         elif InterpolationType in (7,8,9):
@@ -331,7 +335,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     problemSpecification = [iron.ProblemClasses.ELASTICITY,
             iron.ProblemTypes.FINITE_ELASTICITY,
             iron.ProblemSubtypes.NONE]
-    problem.CreateStart(problemUserNumber, problemSpecification)
+    problem.CreateStart(problemUserNumber,iron.Context,problemSpecification)
     problem.CreateFinish()
 
     # Create control loops
