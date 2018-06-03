@@ -307,7 +307,7 @@ CONTAINS
     ! Create a field for the geometry
     CALL cmfe_Field_Initialise(geometricField,Err)
     CALL cmfe_Field_CreateStart(geometricFieldUserNumber,region,geometricField,Err)
-    CALL cmfe_Field_MeshDecompositionSet(geometricField,Decomposition,Err)
+    CALL cmfe_Field_DecompositionSet(geometricField,Decomposition,Err)
     CALL cmfe_Field_TypeSet(geometricField,CMFE_FIELD_GEOMETRIC_TYPE,Err)
     CALL cmfe_Field_VariableLabelSet(geometricField,CMFE_FIELD_U_VARIABLE_TYPE,"Geometry",Err)
     CALL cmfe_Field_ComponentMeshComponentSet(geometricField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,Err)
@@ -389,7 +389,7 @@ CONTAINS
     CALL cmfe_Field_Initialise(fibreField,Err)
     CALL cmfe_Field_CreateStart(fibreFieldUserNumber,region,fibreField,Err)
     CALL cmfe_Field_TypeSet(fibreField,CMFE_FIELD_FIBRE_TYPE,Err)
-    CALL cmfe_Field_MeshDecompositionSet(fibreField,decomposition,Err)
+    CALL cmfe_Field_DecompositionSet(fibreField,decomposition,Err)
     CALL cmfe_Field_GeometricFieldSet(fibreField,geometricField,Err)
     CALL cmfe_Field_VariableLabelSet(fibreField,CMFE_FIELD_U_VARIABLE_TYPE,"Fibre",Err)
     IF (interpolationType==4) THEN
@@ -406,7 +406,7 @@ CONTAINS
     CALL cmfe_Field_Initialise(materialField,Err)
     CALL cmfe_Field_CreateStart(materialFieldUserNumber,Region,materialField,Err)
     CALL cmfe_Field_TypeSet(materialField,CMFE_FIELD_MATERIAL_TYPE,Err)
-    CALL cmfe_Field_MeshDecompositionSet(materialField,decomposition,Err)
+    CALL cmfe_Field_DecompositionSet(materialField,decomposition,Err)
     CALL cmfe_Field_GeometricFieldSet(materialField,geometricField,Err)
     CALL cmfe_Field_NumberOfVariablesSet(materialField,1,Err)
     CALL cmfe_Field_NumberOfComponentsSet(materialField,CMFE_FIELD_U_VARIABLE_TYPE,numberOfMaterialComponents,Err)
@@ -443,7 +443,7 @@ CONTAINS
     CALL cmfe_Field_CreateStart(dependentFieldUserNumber,region,dependentField,Err)
     CALL cmfe_Field_VariableLabelSet(dependentField,CMFE_FIELD_U_VARIABLE_TYPE,"Dependent",Err)
     CALL cmfe_Field_TypeSet(dependentField,CMFE_FIELD_GEOMETRIC_GENERAL_TYPE,Err)
-    CALL cmfe_Field_MeshDecompositionSet(dependentField,decomposition,Err)
+    CALL cmfe_Field_DecompositionSet(dependentField,decomposition,Err)
     CALL cmfe_Field_GeometricFieldSet(dependentField,geometricField,Err)
     CALL cmfe_Field_DependentTypeSet(dependentField,CMFE_FIELD_DEPENDENT_TYPE,Err)
     CALL cmfe_Field_NumberOfVariablesSet(dependentField,2,Err)
@@ -498,7 +498,7 @@ CONTAINS
     ! deformed fibres from the dependent field because it isn't a geometric field.
     CALL cmfe_Field_Initialise(deformedField,Err)
     CALL cmfe_Field_CreateStart(deformedFieldUserNumber,region,deformedField,Err)
-    CALL cmfe_Field_MeshDecompositionSet(deformedField,decomposition,Err)
+    CALL cmfe_Field_DecompositionSet(deformedField,decomposition,Err)
     CALL cmfe_Field_TypeSet(deformedField,CMFE_FIELD_GEOMETRIC_TYPE,Err)
     CALL cmfe_Field_VariableLabelSet(deformedField,CMFE_FIELD_U_VARIABLE_TYPE,"DeformedGeometry",Err)
     DO componentIdx=1,3

@@ -147,7 +147,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     # Create a field for the geometry
     geometricField = iron.Field()
     geometricField.CreateStart(geometricFieldUserNumber,region)
-    geometricField.MeshDecompositionSet(decomposition)
+    geometricField.DecompositionSet(decomposition)
     geometricField.TypeSet(iron.FieldTypes.GEOMETRIC)
     geometricField.VariableLabelSet(iron.FieldVariableTypes.U,"Geometry")
     geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,1,1)
@@ -201,7 +201,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     fibreField = iron.Field()
     fibreField.CreateStart(fibreFieldUserNumber,region)
     fibreField.TypeSet(iron.FieldTypes.FIBRE)
-    fibreField.MeshDecompositionSet(decomposition)
+    fibreField.DecompositionSet(decomposition)
     fibreField.GeometricFieldSet(geometricField)
     fibreField.VariableLabelSet(iron.FieldVariableTypes.U,"Fibre")
     if InterpolationType == 4:
@@ -216,7 +216,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     materialField = iron.Field()
     materialField.CreateStart(materialFieldUserNumber,region)
     materialField.TypeSet(iron.FieldTypes.MATERIAL)
-    materialField.MeshDecompositionSet(decomposition)
+    materialField.DecompositionSet(decomposition)
     materialField.GeometricFieldSet(geometricField)
     materialField.NumberOfVariablesSet(1)
     materialField.NumberOfComponentsSet(iron.FieldVariableTypes.U,numberOfMaterialComponents)
@@ -248,7 +248,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     dependentField.CreateStart(dependentFieldUserNumber,region)
     dependentField.VariableLabelSet(iron.FieldVariableTypes.U,"Dependent")
     dependentField.TypeSet(iron.FieldTypes.GEOMETRIC_GENERAL)
-    dependentField.MeshDecompositionSet(decomposition)
+    dependentField.DecompositionSet(decomposition)
     dependentField.GeometricFieldSet(geometricField)
     dependentField.DependentTypeSet(iron.FieldDependentTypes.DEPENDENT)
     dependentField.NumberOfVariablesSet(2)
@@ -292,7 +292,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     # deformed fibres from the dependent field because it isn't a geometric field.
     deformedField = iron.Field()
     deformedField.CreateStart(deformedFieldUserNumber, region)
-    deformedField.MeshDecompositionSet(decomposition)
+    deformedField.DecompositionSet(decomposition)
     deformedField.TypeSet(iron.FieldTypes.GEOMETRIC)
     deformedField.VariableLabelSet(iron.FieldVariableTypes.U, "DeformedGeometry")
     for component in [1, 2, 3]:
