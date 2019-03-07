@@ -43,7 +43,7 @@ PROGRAM UniaxialExtension
 
 CONTAINS
 
-  SUBROUTINE SOLVE_MODEL(compressible, useGeneratedMesh, zeroLoad, useSimplex, usePressureBasis)
+  SUBROUTINE SOLVE_MODEL(numberOfDimensions, compressible, useGeneratedMesh, zeroLoad, useSimplex, usePressureBasis)
 
     LOGICAL, INTENT(IN)             :: compressible
     LOGICAL, INTENT(IN)             :: useGeneratedMesh
@@ -97,7 +97,6 @@ CONTAINS
 
     TYPE(cmfe_BasisType)                  :: basis,pressureBasis
     TYPE(cmfe_BoundaryConditionsType)     :: boundaryConditions
-    TYPE(cmfe_ComputationEnvironmentType) :: computationEnvironment
     TYPE(cmfe_CoordinateSystemType)       :: coordinateSystem
     TYPE(cmfe_DecompositionType)          :: decomposition
     TYPE(cmfe_EquationsType)              :: equations
@@ -119,7 +118,8 @@ CONTAINS
 
     ! Set all diganostic levels on for testing
     CALL cmfe_DiagnosticsSetOn(CMFE_FROM_DIAG_TYPE,[1,2,3,4,5],"Diagnostics", &
-      & ["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"],Err)
+      & ["FiniteElasticity_FiniteElementResidualEvaluateNew", &
+      &  "FiniteElasticity_FiniteElementJacobianEvaluateNew"],Err)
 
     IF (usePressureBasis) THEN
       numberOfMeshComponents = 2
@@ -491,7 +491,7 @@ CONTAINS
     IF (.NOT.compressible) THEN
       CALL cmfe_Field_ComponentValuesInitialise( &
         & dependentField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE, &
-        & 4,-8.0_CMISSRP,Err)
+        & 4,0.0_CMISSRP,Err)
     END IF
 
     ! Create a deformed geometry field, as cmgui doesn't like displaying
@@ -536,6 +536,9 @@ CONTAINS
     CALL cmfe_Equations_OutputTypeSet(equations,CMFE_EQUATIONS_NO_OUTPUT,Err)
     CALL cmfe_EquationsSet_EquationsCreateFinish(equationsSet,Err)
 
+    CALL cmfe_Equations_JacobianCalculationTypeSet(equations,1,CMFE_FIELD_U_VARIABLE_TYPE, &
+      & CMFE_EQUATIONS_JACOBIAN_ANALYTIC_CALCULATED,Err)
+
     ! Define the problem
     CALL cmfe_Problem_Initialise(problem,Err)
     CALL cmfe_Problem_CreateStart(problemUserNumber,context, &
@@ -554,8 +557,10 @@ CONTAINS
     CALL cmfe_Problem_SolversCreateStart(problem,Err)
     CALL cmfe_Problem_SolverGet(problem,CMFE_CONTROL_LOOP_NODE,1,nonLinearSolver,Err)
     CALL cmfe_Solver_OutputTypeSet(nonlinearSolver,CMFE_SOLVER_PROGRESS_OUTPUT,Err)
+    !CALL cmfe_Solver_NewtonJacobianCalculationTypeSet(nonlinearSolver, &
+    !  & CMFE_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED,Err)
     CALL cmfe_Solver_NewtonJacobianCalculationTypeSet(nonlinearSolver, &
-      & CMFE_SOLVER_NEWTON_JACOBIAN_FD_CALCULATED,Err)
+      & CMFE_SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED,Err)
     CALL cmfe_Solver_NewtonLinearSolverGet(nonlinearSolver,linearSolver,Err)
     CALL cmfe_Solver_NewtonAbsoluteToleranceSet(nonlinearSolver,1.0E-14_CMISSRP,Err)
     CALL cmfe_Solver_NewtonSolutionToleranceSet(nonlinearSolver,1.0E-14_CMISSRP,Err)
