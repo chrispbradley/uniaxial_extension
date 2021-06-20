@@ -30,12 +30,12 @@ PROGRAM UniaxialExtension
 
   ! Input arguments: compressible, useGeneratedMesh, zeroLoad, useSimplex, usePressureBasis
 
-  CALL SOLVE_MODEL(.FALSE., .FALSE., .FALSE., .FALSE., .FALSE.)
-  ! CALL SOLVE_MODEL(.TRUE., .FALSE. , .FALSE., .FALSE., .FALSE.)
-  CALL SOLVE_MODEL(.FALSE., .TRUE. , .FALSE., .FALSE., .FALSE.)
-  CALL SOLVE_MODEL(.FALSE., .FALSE., .TRUE., .FALSE., .FALSE.)
-  CALL SOLVE_MODEL(.FALSE., .FALSE., .FALSE., .TRUE., .FALSE.)
-  CALL SOLVE_MODEL(.FALSE., .TRUE., .FALSE., .FALSE., .TRUE.)
+  CALL SOLVE_MODEL(3, .FALSE., .FALSE., .FALSE., .FALSE., .FALSE.)
+  ! CALL SOLVE_MODEL(3, .TRUE., .FALSE. , .FALSE., .FALSE., .FALSE.)
+  CALL SOLVE_MODEL(3, .FALSE., .TRUE. , .FALSE., .FALSE., .FALSE.)
+  CALL SOLVE_MODEL(3, .FALSE., .FALSE., .TRUE., .FALSE., .FALSE.)
+  CALL SOLVE_MODEL(3, .FALSE., .FALSE., .FALSE., .TRUE., .FALSE.)
+  CALL SOLVE_MODEL(3, .FALSE., .TRUE., .FALSE., .FALSE., .TRUE.)
 
   CALL cmfe_Finalise(context,Err)
 
@@ -45,6 +45,7 @@ CONTAINS
 
   SUBROUTINE SOLVE_MODEL(numberOfDimensions, compressible, useGeneratedMesh, zeroLoad, useSimplex, usePressureBasis)
 
+    INTEGER(CMISSIntg), INTENT(IN)  :: numberOfDimensions
     LOGICAL, INTENT(IN)             :: compressible
     LOGICAL, INTENT(IN)             :: useGeneratedMesh
     LOGICAL, INTENT(IN)             :: zeroLoad
@@ -67,6 +68,7 @@ CONTAINS
     INTEGER(CMISSIntg)              :: generatedMeshUserNumber = 1
     INTEGER(CMISSIntg)              :: meshUserNumber = 1
     INTEGER(CMISSIntg)              :: decompositionUserNumber = 1
+    INTEGER(CMISSIntg)              :: decomposerUserNumber = 1
     INTEGER(CMISSIntg)              :: geometricFieldUserNumber = 1
     INTEGER(CMISSIntg)              :: fibreFieldUserNumber = 2
     INTEGER(CMISSIntg)              :: materialFieldUserNumber = 3
@@ -89,7 +91,7 @@ CONTAINS
     INTEGER(CMISSIntg)              :: contextUserNumber
     INTEGER(CMISSIntg)              :: numberOfComputationalNodes,computationalNodeNumber
     INTEGER(CMISSIntg)              :: componentIdx,Err,numberOfMaterialComponents
-    INTEGER(CMISSIntg)              :: numberOfXi,quadratureOrder
+    INTEGER(CMISSIntg)              :: numberOfXi,quadratureOrder,decompositionIndex
 
     CHARACTER(LEN=255)              :: output_file,prefix
 
@@ -97,7 +99,9 @@ CONTAINS
 
     TYPE(cmfe_BasisType)                  :: basis,pressureBasis
     TYPE(cmfe_BoundaryConditionsType)     :: boundaryConditions
+    TYPE(cmfe_ComputationEnvironmentType) :: computationEnvironment
     TYPE(cmfe_CoordinateSystemType)       :: coordinateSystem
+    TYPE(cmfe_DecomposerType)             :: decomposer
     TYPE(cmfe_DecompositionType)          :: decomposition
     TYPE(cmfe_EquationsType)              :: equations
     TYPE(cmfe_EquationsSetType)           :: equationsSet
@@ -113,6 +117,7 @@ CONTAINS
     TYPE(cmfe_SolverType)                 :: solver,nonlinearSolver,linearSolver
     TYPE(cmfe_SolverEquationsType)        :: solverEquations
     TYPE(cmfe_ControlLoopType)            :: controlLoop
+    TYPE(cmfe_WorkGroupType)              :: worldWorkGroup
 
     WRITE(*,'(A)') "Program starting."
 
@@ -143,8 +148,11 @@ CONTAINS
     ! Get the number of computational nodes and this computational node number
     CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
     CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
-    CALL cmfe_ComputationEnvironment_NumberOfWorldNodesGet(computationEnvironment,numberOfComputationalNodes,err)
-    CALL cmfe_ComputationEnvironment_WorldNodeNumberGet(computationEnvironment,computationalNodeNumber,err)
+  
+    CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
+    CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+    CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationalNodes,err)
+    CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationalNodeNumber,err)
 
     CALL cmfe_CoordinateSystem_Initialise(coordinateSystem,Err)
     CALL cmfe_CoordinateSystem_CreateStart(coordinateSystemUserNumber,context,coordinateSystem,Err)
@@ -301,9 +309,16 @@ CONTAINS
     CALL cmfe_Decomposition_Initialise(decomposition,Err)
     CALL cmfe_Decomposition_CreateStart(decompositionUserNumber,mesh,decomposition,Err)
     CALL cmfe_Decomposition_TypeSet(decomposition,CMFE_DECOMPOSITION_CALCULATED_TYPE,Err)
-    CALL cmfe_Decomposition_NumberOfDomainsSet(decomposition,numberOfComputationalNodes,Err)
     CALL cmfe_Decomposition_CreateFinish(decomposition,Err)
 
+    !Decompose
+    CALL cmfe_Decomposer_Initialise(decomposer,err)
+    CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+    !Add in the decomposition
+    CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+    !Finish the decomposer
+    CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+    
     ! Create a field for the geometry
     CALL cmfe_Field_Initialise(geometricField,Err)
     CALL cmfe_Field_CreateStart(geometricFieldUserNumber,region,geometricField,Err)
