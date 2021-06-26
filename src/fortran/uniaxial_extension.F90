@@ -559,7 +559,7 @@ CONTAINS
     CALL cmfe_Problem_CreateStart(problemUserNumber,context, &
       & [CMFE_PROBLEM_ELASTICITY_CLASS, &
       &  CMFE_PROBLEM_FINITE_ELASTICITY_TYPE, &
-      &  CMFE_PROBLEM_NO_SUBTYPE],problem,Err)
+      &  CMFE_PROBLEM_STATIC_FINITE_ELASTICITY_SUBTYPE],problem,Err)
     CALL cmfe_Problem_CreateFinish(problem,Err)
 
     ! Create control loops
