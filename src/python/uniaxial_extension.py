@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Based on the OpenCMISS-Iron uniaxial extension example, trying to replicate example 521 from classic-cm.
+# Based on the OpenCMISS uniaxial extension example, trying to replicate example 521 from classic-cm.
 
 #> Main script
 # Add Python bindings directory to PATH
@@ -18,6 +18,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
 
     NumberOfGaussXi = 2
 
+    contextUserNumber = 1
     coordinateSystemUserNumber = 1
     regionUserNumber = 1
     basisUserNumber = 1
@@ -53,12 +54,15 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     else:
         numberOfXi = 3
 
+    context = iron.Context()
+    context.Create(contextUserNumber)
+    
     worldRegion = iron.Region()
-    iron.Context.WorldRegionGet(worldRegion)
+    context.WorldRegionGet(worldRegion)
 
     # Get the number of computational nodes and this computational node number
     computationEnvironment = iron.ComputationEnvironment()
-    iron.Context.ComputationEnvironmentGet(computationEnvironment)
+    context.ComputationEnvironmentGet(computationEnvironment)
 
     worldWorkGroup = iron.WorkGroup()
     computationEnvironment.WorldWorkGroupGet(worldWorkGroup)
@@ -67,7 +71,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
 
     # Create a 3D rectangular cartesian coordinate system
     coordinateSystem = iron.CoordinateSystem()
-    coordinateSystem.CreateStart(coordinateSystemUserNumber,iron.Context)
+    coordinateSystem.CreateStart(coordinateSystemUserNumber,context)
     coordinateSystem.DimensionSet(3)
     coordinateSystem.CreateFinish()
 
@@ -80,7 +84,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
 
     # Define basis
     basis = iron.Basis()
-    basis.CreateStart(basisUserNumber,iron.Context)
+    basis.CreateStart(basisUserNumber,context)
     if InterpolationType in (1,2,3,4):
         basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
     elif InterpolationType in (7,8,9):
@@ -94,7 +98,7 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     if(usePressureBasis):
         # Define pressure basis
         pressureBasis = iron.Basis()
-        pressureBasis.CreateStart(pressureBasisUserNumber,iron.Context)
+        pressureBasis.CreateStart(pressureBasisUserNumber,context)
         if InterpolationType in (1,2,3,4):
             pressureBasis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
         elif InterpolationType in (7,8,9):
@@ -343,8 +347,8 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     problem = iron.Problem()
     problemSpecification = [iron.ProblemClasses.ELASTICITY,
             iron.ProblemTypes.FINITE_ELASTICITY,
-            iron.ProblemSubtypes.NONE]
-    problem.CreateStart(problemUserNumber,iron.Context,problemSpecification)
+            iron.ProblemSubtypes.STATIC_FINITE_ELASTICITY]
+    problem.CreateStart(problemUserNumber,context,problemSpecification)
     problem.CreateFinish()
 
     # Create control loops
@@ -441,12 +445,13 @@ def solveModel(compressible, useGeneratedMesh, zeroLoad, usePressureBasis):
     fields.ElementsExport(output_file+prefix,"FORTRAN")
     fields.Finalise()
 
-    problem.Destroy()
-    if useGeneratedMesh:
-      generatedMesh.Destroy()
-    basis.Destroy()
-    region.Destroy()
-    coordinateSystem.Destroy()
+    #problem.Destroy()
+    #if useGeneratedMesh:
+    #  generatedMesh.Destroy()
+    #basis.Destroy()
+    #region.Destroy()
+    #coordinateSystem.Destroy()
+    context.Destroy()
 
 if __name__ == "__main__":
     compressible = False

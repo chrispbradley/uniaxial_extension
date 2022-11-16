@@ -21,12 +21,14 @@ PROGRAM UniaxialExtension
 
   INTEGER(CMISSIntg)              :: Err
 
-  ! Intialise cmiss
-  CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Initialise(context,err)
+  ! Intialise OpenCMISS
+  CALL cmfe_Initialise(err)
   CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,err)
-  CALL cmfe_Region_Initialise(worldRegion,err)
-  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
+  ! Set all diganostic levels on for testing
+  !CALL cmfe_DiagnosticsSetOn(CMFE_FROM_DIAG_TYPE,[1,2,3,4,5],"Diagnostics", &
+  !  & ["FiniteElasticity_FiniteElementResidualEvaluateNew", &
+  !  &  "FiniteElasticity_FiniteElementJacobianEvaluateNew"],Err)
+
 
   ! Input arguments: compressible, useGeneratedMesh, zeroLoad, useSimplex, usePressureBasis
 
@@ -37,7 +39,8 @@ PROGRAM UniaxialExtension
   CALL SOLVE_MODEL(3, .FALSE., .FALSE., .FALSE., .TRUE., .FALSE.)
   CALL SOLVE_MODEL(3, .FALSE., .TRUE., .FALSE., .FALSE., .TRUE.)
 
-  CALL cmfe_Finalise(context,Err)
+  ! Finalise OpenCMISS
+  CALL cmfe_Finalise(err)
 
   STOP
 
@@ -121,11 +124,6 @@ CONTAINS
 
     WRITE(*,'(A)') "Program starting."
 
-    ! Set all diganostic levels on for testing
-    CALL cmfe_DiagnosticsSetOn(CMFE_FROM_DIAG_TYPE,[1,2,3,4,5],"Diagnostics", &
-      & ["FiniteElasticity_FiniteElementResidualEvaluateNew", &
-      &  "FiniteElasticity_FiniteElementJacobianEvaluateNew"],Err)
-
     IF (usePressureBasis) THEN
       numberOfMeshComponents = 2
     ELSE
@@ -145,6 +143,12 @@ CONTAINS
       interpolationType = 1
     END IF
 
+    ! Create a context
+    CALL cmfe_Context_Initialise(context,err)
+    CALL cmfe_Context_Create(1_CMISSIntg,context,err)
+    CALL cmfe_Region_Initialise(worldRegion,err)
+    CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
+    
     ! Get the number of computational nodes and this computational node number
     CALL cmfe_ComputationEnvironment_Initialise(computationEnvironment,err)
     CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
@@ -688,15 +692,18 @@ CONTAINS
     CALL cmfe_Fields_ElementsExport(fields,trim(output_file)//trim(prefix),"FORTRAN",Err)
     CALL cmfe_Fields_Finalise(fields,Err)
 
-    CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
-    CALL cmfe_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
-    IF (useGeneratedMesh) THEN
-      CALL cmfe_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)
-    END IF
-    CALL cmfe_Basis_Destroy(contextUserNumber,BasisUserNumber,Err)
-    CALL cmfe_Region_Destroy(contextUserNumber,RegionUserNumber,Err)
-    CALL cmfe_CoordinateSystem_Destroy(contextUserNumber,CoordinateSystemUserNumber,Err)
+    !CALL cmfe_Context_UserNumberGet(context,contextUserNumber,err)
+    !CALL cmfe_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
+    !IF (useGeneratedMesh) THEN
+    !  CALL cmfe_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)
+    !END IF
+    !CALL cmfe_Basis_Destroy(contextUserNumber,BasisUserNumber,Err)
+    !CALL cmfe_Region_Destroy(contextUserNumber,RegionUserNumber,Err)
+    !CALL cmfe_CoordinateSystem_Destroy(contextUserNumber,CoordinateSystemUserNumber,Err)
 
+    ! Destroy the context
+    CALL cmfe_Context_Destroy(context,err)
+    
     WRITE(*,'(A)') "Program successfully completed."
 
   END SUBROUTINE SOLVE_MODEL
