@@ -463,6 +463,7 @@ CONTAINS
     CALL OC_Field_GeometricFieldSet(dependentField,geometricField,err)
     CALL OC_Field_DependentTypeSet(dependentField,OC_FIELD_DEPENDENT_TYPE,err)
     CALL OC_Field_NumberOfVariablesSet(dependentField,2,err)
+    CALL OC_Field_VariableTypesSet(dependentField,[OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_T_VARIABLE_TYPE],err)
     CALL OC_Field_NumberOfComponentsSet(dependentField,OC_FIELD_U_VARIABLE_TYPE,numberOfMaterialComponents,err)
     CALL OC_Field_NumberOfComponentsSet(dependentField,OC_FIELD_T_VARIABLE_TYPE,numberOfMaterialComponents,err)
     CALL OC_Field_ComponentMeshComponentSet(dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,err)
